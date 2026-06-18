@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/zhenlin/rescue_matching -name \"*.md\" 2>/dev/null && find /Users/zhenlin -maxdepth 3 -name \"*.md\" 2>/dev/null | grep -v rescue_matching | grep -v node_modules)",
+      "Read(//Users/zhenlin/**)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
