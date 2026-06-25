@@ -1,13 +1,660 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>rescue_matching</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rescue Match — Portal (3D)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Syne:wght@700;800&family=Varela+Round&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/GradientText.css" />
+<style>
+  :root { --color-primary: #D97706; --font-heading: 'Varela Round', system-ui, sans-serif; --font-body: 'Nunito Sans', system-ui, sans-serif; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: auto; }
+  body { font-family: var(--font-body); color: #F4F1FF; background: #07060f; }
+
+  /* full-bleed footage — the world */
+  #videoWrap { position: fixed; inset: 0; z-index: 0; transform-origin: center center; will-change: transform; }
+  .bgv { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+  #vBegin { opacity: 1; }
+  /* begin invitation */
+  .intro-begin { position: fixed; left: 50%; top: 50%; z-index: 5; transform: translate(-50%, 10px); width: min(760px, 86vw); text-align: center; opacity: 0; pointer-events: none; transition: opacity 600ms ease, transform 600ms ease; }
+  .intro-begin.show { opacity: 1; transform: translate(-50%, 0); }
+  .begin-title { font-family: var(--font-heading); font-weight: 400; font-size: clamp(28px, 4.4vw, 52px); color: #ECE7FF; line-height: 1.15; text-wrap: balance; text-shadow: 0 2px 30px rgba(10,8,40,0.9); }
+  .begin-title em { font-style: normal; color: var(--color-primary); }
+  .begin-hint { margin-top: 24px; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #cdbfff; animation: pulse 2.4s ease-in-out infinite; }
+  .begin-hint .chev { display: block; margin: 8px auto 0; width: 13px; height: 13px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); }
+
+  /* transparent 3D effects overlay */
+  #webgl { position: fixed; inset: 0; z-index: 1; display: block; pointer-events: none; transition: filter 300ms ease; }
+  #vTint { position: fixed; inset: 0; z-index: 2; pointer-events: none; background:
+      radial-gradient(140% 100% at 50% 50%, rgba(5,3,15,0) 42%, rgba(5,3,15,0.66) 100%); opacity: 0.22; transition: opacity 300ms ease; }
+
+  .scroll-spacer { height: 1050vh; width: 1px; pointer-events: none; }
+
+  /* nav */
+  header { position: fixed; top: 0; left: 0; right: 0; z-index: 8; display: flex; align-items: center; padding: clamp(18px,3vw,34px) clamp(20px,4vw,48px) 0; pointer-events: none; }
+  .nav-zone { display: flex; align-items: center; }
+  .nav-left { flex: 0 0 25%; justify-content: flex-start; } .nav-center { flex: 0 0 50%; justify-content: center; gap: clamp(26px,3vw,54px); } .nav-right { flex: 0 0 25%; justify-content: flex-end; gap: clamp(18px,2vw,26px); }
+  .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; pointer-events: auto; transform-style: preserve-3d; cursor: pointer; }
+  .logo.easing { transition: transform 0.45s cubic-bezier(.15,.85,.35,1); }
+  .logo .paw { display: inline-flex; align-items: center; justify-content: center; width: 1.5em; height: 1.5em; font-size: 0.66em; background: var(--color-primary); color: #fff; border-radius: 9999px; box-shadow: 0 0 18px rgba(217,119,6,0.7); }
+  /* nav GradientText overrides — no pill, no blur, clean inline text */
+  #rmNavLogo .animated-gradient-text { backdrop-filter: none; border-radius: 0; background: none; }
+  #rmNavLogo .text-content {
+    font-family: 'Syne', var(--font-heading), sans-serif; font-weight: 800;
+    font-size: clamp(15px, 1.6vw, 22px); letter-spacing: -0.01em; line-height: 1;
+  }
+  .navlink { position: relative; pointer-events: auto; display: inline-flex; flex-direction: column; align-items: center; font-family: var(--font-body); font-weight: 600; font-size: clamp(12px,1.05vw,15px); letter-spacing: 0.14em; text-transform: uppercase; color: #d8d2ff; text-decoration: none; text-shadow: 0 2px 16px rgba(0,0,0,0.5); transition: color 200ms ease; white-space: nowrap; }
+  .navlink:hover { color: #fff; }
+  .navlink .squiggle { position: absolute; bottom: -9px; left: 0; display: block; height: 6px; width: 0; overflow: hidden; transition: width 0.35s cubic-bezier(.2,.7,.2,1); }
+  .navlink:hover .squiggle { width: 100%; } .navlink .squiggle svg { height: 6px; width: 100%; min-width: 42px; display: block; }
+  .sound { pointer-events: auto; cursor: pointer; background: none; border: none; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-body); font-weight: 600; font-size: clamp(12px,1.05vw,15px); letter-spacing: 0.14em; text-transform: uppercase; color: #d8d2ff; text-shadow: 0 2px 16px rgba(0,0,0,0.5); transition: color 200ms ease; }
+  .sound:hover { color: #fff; } .sound .sound-icon { font-size: 16px; line-height: 1; }
+  .menu-toggle { display: none; pointer-events: auto; cursor: pointer; background: none; border: none; font-family: var(--font-body); font-weight: 600; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: #d8d2ff; text-shadow: 0 2px 16px rgba(0,0,0,0.5); }
+  .mobile-menu { position: fixed; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; background: rgba(10,8,32,0.94); backdrop-filter: blur(10px); opacity: 0; pointer-events: none; transition: opacity 300ms ease; }
+  .mobile-menu.open { opacity: 1; pointer-events: auto; } .mobile-links { display: flex; flex-direction: column; align-items: center; gap: 38px; } .mobile-links a { font-family: var(--font-heading); font-size: 30px; color: #ECE7FF; text-decoration: none; }
+  @media (max-width: 767px) { .nav-center { display: none; } .nav-left, .nav-right { flex: 0 0 50%; } .menu-toggle { display: inline-block; } .sound .sound-label { display: none; } }
+
+  /* divider motif */
+  .divider { display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 16px; }
+  .divider .hair { height: 1px; flex: 1 1 auto; max-width: 38%; }
+  .divider .hair.left { background: linear-gradient(90deg, transparent, rgba(217,119,6,0.7)); } .divider .hair.right { background: linear-gradient(-90deg, transparent, rgba(217,119,6,0.7)); }
+  .divider .diamond { width: 8px; height: 8px; border: 1px solid rgba(217,119,6,0.9); transform: rotate(45deg); position: relative; flex: 0 0 auto; margin: 0 10px; }
+  .divider .diamond::after { content: ''; position: absolute; inset: 2px; background: var(--color-primary); }
+
+  /* intro click-through */
+  #intro { position: fixed; inset: 0; z-index: 7; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 8vw; }
+  .intro-line { position: absolute; left: 50%; top: 40%; transform: translate(-50%, 8px); width: min(720px, 84vw); opacity: 0; pointer-events: none; transition: opacity 600ms ease, transform 600ms ease; }
+  .intro-line.show { opacity: 1; transform: translate(-50%, 0); }
+  .intro-line p { font-family: var(--font-body); font-weight: 400; font-size: clamp(20px, 3.2vw, 38px); letter-spacing: 0.06em; text-transform: uppercase; color: #ECE7FF; line-height: 1.4; text-wrap: balance; text-shadow: 0 2px 30px rgba(10,8,40,0.9); }
+  .intro-progress { position: absolute; bottom: clamp(96px,16vh,150px); left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }
+  .intro-progress .d { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.22); transition: all 240ms ease; }
+  .intro-progress .d.on { background: var(--color-primary); width: 24px; border-radius: 4px; }
+  .intro-hint { position: absolute; bottom: clamp(40px,8vh,72px); left: 0; right: 0; text-align: center; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #cdbfff; animation: pulse 2.4s ease-in-out infinite; }
+  .intro-hint .chev { display: block; margin: 8px auto 0; width: 13px; height: 13px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); }
+  @keyframes pulse { 0%,100%{opacity:.45} 50%{opacity:.95} }
+  #intro.gone { opacity: 0; pointer-events: none; transition: opacity 700ms ease; }
+
+  /* depth cards */
+  #cardLayer { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
+  .card3d { position: fixed; left: 0; top: 0; width: 460px; transform-origin: center center; will-change: transform, opacity; opacity: 0; pointer-events: none; }
+  .card3d.live { pointer-events: auto; }
+  .panel { background: rgba(9,6,20,0.74); backdrop-filter: blur(18px) saturate(1.1); -webkit-backdrop-filter: blur(18px) saturate(1.1); border: 1px solid rgba(255,255,255,0.16); border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 34px 90px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.2), 0 0 70px rgba(217,119,6,0.14); }
+  .eyebrow { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-primary); font-weight: 700; margin-bottom: 12px; }
+  .panel h2 { font-family: var(--font-heading); font-weight: 400; font-size: 34px; color: #fff; line-height: 1.12; margin-bottom: 10px; text-wrap: balance; }
+  .panel .sub { font-size: 16px; color: #b8aee0; line-height: 1.5; max-width: 36ch; margin: 0 auto 26px; text-wrap: balance; }
+
+  .bday { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .field { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+  .field label { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #9a8fce; padding-left: 4px; }
+  select.pick { font-family: var(--font-body); font-size: 17px; font-weight: 600; color: #F4F1FF; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16); border-radius: 13px; padding: 13px 16px; min-height: 50px; min-width: 150px; appearance: none; -webkit-appearance: none; cursor: pointer; outline: none; transition: border-color 160ms ease, background 160ms ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23D97706' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 16px center; }
+  select.pick:focus, select.pick:hover { border-color: rgba(217,119,6,0.65); background-color: rgba(255,255,255,0.09); }
+  select.pick option { background: #150e2e; color: #F4F1FF; }
+  .chips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .chip { font-family: var(--font-body); font-weight: 600; font-size: 16px; color: #E7E1FF; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 12px 14px; min-height: 50px; cursor: pointer; text-align: center; transition: all 160ms ease; display: flex; flex-direction: column; gap: 3px; align-items: center; justify-content: center; }
+  .chip small { font-weight: 400; font-size: 12px; color: #9a8fce; }
+  .chip:hover { border-color: rgba(217,119,6,0.5); background: rgba(255,255,255,0.08); }
+  .chip.sel { border-color: var(--color-primary); background: rgba(217,119,6,0.16); box-shadow: 0 0 0 1px var(--color-primary) inset, 0 10px 30px rgba(217,119,6,0.22); color: #fff; }
+  .chip.sel small { color: #f3c98a; }
+  .species { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pet { cursor: pointer; border-radius: 18px; padding: 22px 12px; min-height: 116px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; transition: all 180ms ease; }
+  .pet .ico { font-size: 38px; line-height: 1; } .pet .lbl { font-family: var(--font-heading); font-size: 20px; color: #fff; }
+  .pet:hover { border-color: rgba(217,119,6,0.5); background: rgba(255,255,255,0.08); transform: translateY(-2px); }
+  .pet.sel { border-color: var(--color-primary); background: rgba(217,119,6,0.18); box-shadow: 0 0 0 1px var(--color-primary) inset, 0 14px 40px rgba(217,119,6,0.28); }
+  .step-hint { margin-top: 22px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #8b80b8; min-height: 14px; }
+  .answered .step-hint { color: var(--color-primary); }
+
+  .panel.reveal h2 { font-size: 42px; margin-bottom: 14px; }
+  .recap { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 4px 0 26px; }
+  .recap .tag { font-size: 13px; color: #ECE7FF; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); border-radius: 9999px; padding: 9px 16px; }
+  .recap .tag b { color: #f3c98a; font-weight: 700; }
+  .cta { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-body); font-weight: 700; font-size: 18px; letter-spacing: 0.04em; color: #1a1206; text-decoration: none; background: var(--color-primary); padding: 16px 32px; border-radius: 9999px; box-shadow: 0 12px 38px rgba(217,119,6,0.48); transition: transform 160ms ease, box-shadow 160ms ease; }
+  .cta:hover { transform: translateY(-2px); box-shadow: 0 16px 48px rgba(217,119,6,0.62); }
+
+  @media (max-width: 520px) { .card3d { width: 88vw; } .panel { padding: 26px; } .panel h2 { font-size: 27px; } }
+
+  /* locked selections gate */
+  #lockGate { position: fixed; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; padding: 9vh 20px; opacity: 0; pointer-events: none; transition: opacity 600ms ease; }
+  #lockGate.show { opacity: 1; pointer-events: auto; }
+  #lockGate.done { opacity: 0; pointer-events: none; }
+  .gate { width: min(560px, 92vw); }
+  .gate h2 { margin-bottom: 16px; }
+  .gate-q { margin: 0 0 14px; }
+  .gate-label { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #9a8fce; margin-bottom: 10px; }
+  .gate-divline { height: 1px; background: linear-gradient(90deg, transparent, rgba(217,119,6,0.4), transparent); margin: 2px 0 14px; }
+  #enterBtn { margin-top: 4px; border: none; opacity: 0.34; pointer-events: none; }
+  #enterBtn.ready { opacity: 1; pointer-events: auto; }
+
+  /* reflective glass card — adapted from React Bits ReflectiveCard; the cosmic
+     portal behind the card is what the glass reflects/refracts (no webcam) */
+  .panel.gate { position: relative; overflow: hidden; isolation: isolate; padding: 0; border: none;
+    background: rgba(16, 12, 34, 0.32);
+    backdrop-filter: blur(20px) saturate(1.5) brightness(1.05);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5) brightness(1.05);
+    box-shadow: 0 28px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06) inset; }
+  .refl-sheen, .refl-noise, .refl-border { position: absolute; inset: 0; pointer-events: none; border-radius: 24px; }
+  .refl-sheen { z-index: 0; mix-blend-mode: overlay; opacity: 0.85;
+    background: linear-gradient(135deg, rgba(255,255,255,0.42) 0%, rgba(255,255,255,0.10) 40%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.10) 60%, rgba(255,255,255,0.30) 100%); }
+  .refl-noise { z-index: 0; mix-blend-mode: overlay; opacity: 0.20;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  .refl-border { z-index: 4; padding: 1px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0.6) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor;
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask-composite: exclude; }
+  .refl-content { position: relative; z-index: 5; padding: clamp(24px, 3.2vw, 38px); text-align: center; max-height: 88vh; overflow-y: auto; }
+
+  /* end gate — interactive SVG constellations over the live sky; tilted, split L/R, text low */
+  #endGate { position: fixed; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 4vh; padding: 12vh 4vw 9vh; opacity: 0; pointer-events: none; transition: opacity 900ms ease; background: radial-gradient(120% 90% at 50% 32%, rgba(5,3,12,0) 40%, rgba(5,3,12,0.6) 100%); }
+  #endGate.show { opacity: 1; pointer-events: auto; }
+  .const-field { display: flex; align-items: flex-start; justify-content: space-between; gap: 4vw; width: 100%; max-width: 1180px; margin: 0 auto; padding: 0 clamp(10px, 5vw, 80px); }
+  .constellation { position: relative; display: flex; flex-direction: column; align-items: center; gap: 16px; text-decoration: none; cursor: pointer; opacity: 1; transition: opacity 420ms ease, transform 420ms ease; }
+  .constellation.cat { transform: rotate(-9deg); }
+  .constellation.dog { transform: rotate(8deg); margin-top: 6vh; }
+  .const-field:hover .constellation { opacity: 0.45; }
+  .const-field .constellation.cat:hover { opacity: 1; transform: rotate(-9deg) translateY(-6px) scale(1.04); }
+  .const-field .constellation.dog:hover { opacity: 1; transform: rotate(8deg) translateY(-6px) scale(1.04); }
+  .const-svg { width: clamp(200px, 24vw, 330px); height: auto; overflow: visible; display: block; filter: url(#constGlow) drop-shadow(0 0 3px rgba(170,205,255,0.7)); transition: filter 420ms ease; }
+  .const-line { fill: none; stroke: url(#glassLine); stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; transition: stroke-width 420ms ease; }
+  .const-star { fill: url(#starBead); animation: starTwinkle 3.2s ease-in-out infinite; }
+  .stars circle:nth-child(3n) { animation-delay: 0.7s; }
+  .stars circle:nth-child(3n+1) { animation-delay: 1.5s; }
+  .stars circle:nth-child(4n) { animation-delay: 2.2s; }
+  .constellation:hover .const-line { stroke-width: 2.5; }
+  .constellation.cat:hover .const-svg { filter: url(#constGlow) drop-shadow(0 0 8px rgba(180,215,255,1)) drop-shadow(0 0 18px rgba(150,190,255,0.6)); }
+  .constellation.dog:hover .const-svg { filter: url(#constGlow) drop-shadow(0 0 8px rgba(255,214,150,1)) drop-shadow(0 0 18px rgba(255,200,140,0.6)); }
+  .const-label { font-family: var(--font-heading); font-weight: 400; font-size: clamp(15px, 1.6vw, 20px); letter-spacing: 0.22em; text-transform: uppercase; color: #e4def7; text-shadow: 0 2px 18px rgba(0,0,0,0.7); transition: color 420ms ease; }
+  .constellation:hover .const-label { color: #fff; }
+  .sky-prompt { text-align: center; pointer-events: none; }
+  .sky-kicker { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--color-primary); font-weight: 700; margin-bottom: 10px; }
+  .sky-prompt h2 { font-family: var(--font-heading); font-weight: 400; font-size: clamp(22px, 3vw, 36px); color: #fff; text-shadow: 0 2px 26px rgba(0,0,0,0.85); }
+  .sky-prompt .recap { margin-top: 14px; justify-content: center; }
+  @keyframes starTwinkle { 0%,100% { opacity: 0.82; } 50% { opacity: 1; } }
+  @media (max-width: 760px) { .const-field { gap: 4vw; padding: 0 12px; } .const-svg { width: min(43vw, 200px); } .constellation.dog { margin-top: 9vh; } }
+
+  /* hero logo mount — Three.js canvas fills this box */
+  #rmHeroLogo { width: 100%; height: clamp(150px, 24vh, 230px); overflow: hidden; }
+  #rmNavLogo { display: inline-flex; align-items: center; }
+
+  /* progress rail */
+  #rail { position: fixed; right: clamp(16px,2.4vw,30px); top: 50%; transform: translateY(-50%); z-index: 6; display: flex; flex-direction: column; gap: 12px; opacity: 0; transition: opacity 400ms ease; pointer-events: none; }
+  #rail.show { opacity: 1; }
+  #rail .r { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.25); transition: all 240ms ease; }
+  #rail .r.on { background: var(--color-primary); transform: scale(1.35); box-shadow: 0 0 14px rgba(217,119,6,0.7); }
+  #rail .r.done { background: rgba(217,119,6,0.55); }
+
+  /* preloader */
+  @property --reveal { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+  #loader { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: #FFFBEB;
+    -webkit-mask: radial-gradient(circle at 50% 50%, transparent var(--reveal,0%), #000 calc(var(--reveal,0%) + 1.5%)); mask: radial-gradient(circle at 50% 50%, transparent var(--reveal,0%), #000 calc(var(--reveal,0%) + 1.5%));
+    transition: --reveal 1.25s cubic-bezier(.7,0,.2,1), opacity 0.6s ease 0.9s; }
+  #loader.reveal { --reveal: 150%; opacity: 0; }
+  .loader-inner { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .loader-mark { font-size: 40px; filter: drop-shadow(0 4px 14px rgba(217,119,6,.4)); animation: float 4s ease-in-out infinite; }
+  .loader-label { font-family: var(--font-heading); font-size: clamp(18px,2.4vw,26px); color: #0F172A; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+
+  /* ── How It Works modal ── */
+  #howModal { position: fixed; inset: 0; z-index: 20; background: rgba(8,4,26,0.68); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 360ms ease; }
+  #howModal.show { opacity: 1; pointer-events: auto; }
+  .how-card { position: relative; width: 100%; max-width: 660px; background: rgba(14,9,36,0.94); border: 1px solid rgba(130,100,255,0.26); border-radius: 20px; padding: clamp(28px,5vw,52px) clamp(24px,5vw,48px); box-shadow: 0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06); max-height: 90vh; overflow-y: auto; }
+  .how-close { position: absolute; top: 18px; right: 20px; background: none; border: none; color: rgba(200,190,255,0.45); font-size: 26px; cursor: pointer; line-height: 1; padding: 4px 8px; transition: color 180ms; }
+  .how-close:hover { color: #fff; }
+  .how-eyebrow { font-family: var(--font-body); font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--color-primary); margin: 0 0 10px; }
+  .how-title { font-family: var(--font-heading); font-weight: 700; font-size: clamp(24px,3.5vw,38px); color: #ECE7FF; margin: 0 0 34px; line-height: 1.1; }
+  .how-steps { display: flex; flex-direction: column; gap: 30px; margin-bottom: 32px; }
+  .how-step { display: flex; gap: 24px; align-items: flex-start; }
+  .how-step-num { font-family: var(--font-heading); font-weight: 800; font-size: 38px; line-height: 1; background: linear-gradient(135deg, #5227FF 0%, #D97706 55%, #FFE880 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; flex: 0 0 56px; width: 56px; padding-top: 1px; }
+  .how-step-body h3 { font-family: var(--font-heading); font-weight: 700; font-size: clamp(16px,1.8vw,20px); color: #ECE7FF; margin: 0 0 6px; }
+  .how-step-body p { font-family: var(--font-body); font-size: clamp(13px,1.3vw,15px); color: rgba(200,190,255,0.68); line-height: 1.7; margin: 0; }
+  .how-footer { font-family: var(--font-body); font-size: 13px; color: rgba(200,190,255,0.46); line-height: 1.6; border-top: 1px solid rgba(130,100,255,0.16); padding-top: 22px; margin: 0; }
+  .how-footer strong { color: rgba(200,190,255,0.65); }
+</style>
+</head>
+<body>
+  <div id="loader"><div class="loader-inner"><span class="loader-mark">🐾</span><p class="loader-label">opening the portal<span id="loaderDots">…</span></p></div></div>
+
+  <!-- full-bleed footage (crossfaded + scrubbed by scroll) -->
+  <div id="videoWrap">
+    <video id="vBegin"   class="bgv" muted playsinline preload="auto" loop src="uploads/beginning loop.mp4"></video>
+    <video id="vJourney" class="bgv" muted playsinline preload="auto" src="uploads/portal-journey.mp4"></video>
+    <video id="vEnd"     class="bgv" muted playsinline preload="auto" loop src="uploads/ending_loop.mp4"></video>
+  </div>
+
+  <canvas id="webgl"></canvas>
+  <div id="vTint"></div>
+  <div class="scroll-spacer"></div>
+
+  <header>
+    <div class="nav-zone nav-left"><a class="logo" href="#" id="navLogo"><span class="paw">🐾</span><span id="rmNavLogo"></span></a></div>
+    <nav class="nav-zone nav-center">
+      <a class="navlink" href="#about">About <span class="squiggle"><svg viewBox="0 0 48 6" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 3.2C8 1 14 5 21 3.2 28 1.4 34 5 47 2.6" stroke="#D97706" stroke-width="1.6" stroke-linecap="round"/></svg></span></a>
+      <a class="navlink" href="#" data-open-how>How it works <span class="squiggle"><svg viewBox="0 0 48 6" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 3.2C8 1 14 5 21 3.2 28 1.4 34 5 47 2.6" stroke="#D97706" stroke-width="1.6" stroke-linecap="round"/></svg></span></a>
+    </nav>
+    <div class="nav-zone nav-right">
+      <button class="sound" id="soundBtn" title="Toggle ambient sound"><span class="sound-label">sound off</span><span class="sound-icon">🔇</span></button>
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu">menu</button>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobileMenu"><nav class="mobile-links"><a href="#about">About</a><a href="#" data-open-how>How it works</a></nav></div>
+
+  <div id="rail"><span class="r" data-r="1"></span><span class="r" data-r="2"></span><span class="r" data-r="3"></span></div>
+
+  <div id="intro">
+    <div class="intro-line" data-i="0"><div class="divider"><span class="hair left"></span><span class="diamond"></span><span class="hair right"></span></div><p>Every year, one day belongs to you alone.</p></div>
+    <div class="intro-line" data-i="1"><div class="divider"><span class="hair left"></span><span class="diamond"></span><span class="hair right"></span></div><p>Somewhere, a rescue was found on that very date.</p></div>
+    <div class="intro-line" data-i="2"><div class="divider"><span class="hair left"></span><span class="diamond"></span><span class="hair right"></span></div><p>They&rsquo;re still waiting for a birthday of their own.</p></div>
+    <div class="intro-progress"><span class="d on"></span><span class="d"></span><span class="d"></span></div>
+    <div class="intro-hint" id="introHint">Click to continue</div>
+  </div>
+
+  <!-- locked selections gate (scroll stays locked until both are chosen) -->
+  <div id="lockGate">
+    <div class="panel gate refl">
+      <div class="refl-sheen"></div>
+      <div class="refl-noise"></div>
+      <div class="refl-border"></div>
+      <div class="refl-content">
+      <div class="eyebrow">Before the portal opens</div>
+      <h2>Two things about you</h2>
+      <div class="gate-q">
+        <p class="gate-label">When is your birthday?</p>
+        <div class="bday">
+          <div class="field"><label for="bMonth">Month</label><select class="pick" id="bMonth"><option value="" disabled selected>—</option></select></div>
+          <div class="field"><label for="bDay">Day</label><select class="pick" id="bDay"><option value="" disabled selected>—</option></select></div>
+        </div>
+        <div class="step-hint" id="hint1">Choose your birthday</div>
+      </div>
+      <div class="gate-divline"></div>
+      <div class="gate-q">
+        <p class="gate-label">What pace of life do you keep?</p>
+        <div class="chips" id="energy">
+          <div class="chip" data-val="Calm">Calm<small>quiet, gentle senior</small></div>
+          <div class="chip" data-val="Easygoing">Easygoing<small>steady &amp; mellow</small></div>
+          <div class="chip" data-val="Playful">Playful<small>curious adult</small></div>
+          <div class="chip" data-val="Spirited">Spirited<small>bundle of energy</small></div>
+        </div>
+        <div class="step-hint" id="hint2">Pick one</div>
+      </div>
+      <button class="cta" id="enterBtn" disabled>Open the portal&nbsp;→</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="intro-begin" id="beginPrompt">
+    <div class="divider"><span class="hair left"></span><span class="diamond"></span><span class="hair right"></span></div>
+    <p class="begin-title">Scroll through to meet your <em>Pawsible&nbsp;Pals</em></p>
+    <div class="begin-hint">Scroll<span class="chev"></span></div>
+  </div>
+
+  <!-- shared defs: neon glow + glassy gradients for the constellations -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="constGlow" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="b1"/>
+        <feGaussianBlur in="SourceGraphic" stdDeviation="3.2" result="b2"/>
+        <feMerge>
+          <feMergeNode in="b2"/>
+          <feMergeNode in="b1"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+      <linearGradient id="glassLine" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#ffffff"/>
+        <stop offset="45%" stop-color="#d6e6ff"/>
+        <stop offset="100%" stop-color="#a8c6ff"/>
+      </linearGradient>
+      <radialGradient id="starBead" cx="50%" cy="38%" r="64%">
+        <stop offset="0%" stop-color="#ffffff"/>
+        <stop offset="40%" stop-color="#eef4ff"/>
+        <stop offset="100%" stop-color="#a6c6ff" stop-opacity="0.92"/>
+      </radialGradient>
+    </defs>
+  </svg>
+
+  <!-- end gate: two interactive constellation shapes — tilted, split L/R, text below -->
+  <div id="endGate">
+    <div id="rmHeroLogo"></div>
+    <div class="const-field">
+      <a class="constellation cat" id="constCat" data-species="cat" href="pets.html?species=cat" aria-label="Felis Celestial — meet the cats">
+        <svg class="const-svg" viewBox="0 0 300 380" xmlns="http://www.w3.org/2000/svg">
+          <polyline class="const-line" points="72,52 90,76 108,50 122,100 134,160 152,220 168,292 150,326 96,328 90,250 82,175 60,122 52,92 66,74 72,52" />
+          <polyline class="const-line" points="165,295 210,302 245,272 260,215 250,160 220,138 200,158 212,188" />
+          <g class="stars">
+            <circle class="const-star" cx="72" cy="52" r="4.5"/><circle class="const-star" cx="108" cy="50" r="4.5"/><circle class="const-star" cx="122" cy="100" r="3.2"/><circle class="const-star" cx="134" cy="160" r="3"/><circle class="const-star" cx="152" cy="220" r="3.2"/><circle class="const-star" cx="168" cy="292" r="4"/><circle class="const-star" cx="150" cy="326" r="3.5"/><circle class="const-star" cx="96" cy="328" r="4"/><circle class="const-star" cx="90" cy="250" r="3"/><circle class="const-star" cx="82" cy="175" r="3"/><circle class="const-star" cx="60" cy="122" r="3"/><circle class="const-star" cx="52" cy="92" r="3.5"/><circle class="const-star" cx="66" cy="74" r="2.8"/><circle class="const-star" cx="112" cy="210" r="2.5"/><circle class="const-star" cx="120" cy="285" r="2.5"/><circle class="const-star" cx="210" cy="302" r="3"/><circle class="const-star" cx="245" cy="272" r="3.2"/><circle class="const-star" cx="260" cy="215" r="3"/><circle class="const-star" cx="250" cy="160" r="3.5"/><circle class="const-star" cx="220" cy="138" r="3"/><circle class="const-star" cx="212" cy="188" r="2.6"/>
+          </g>
+        </svg>
+        <span class="const-label">Felis Celestial</span>
+      </a>
+      <a class="constellation dog" id="constDog" data-species="dog" href="pets.html?species=dog" aria-label="Canis Celestial — meet the dogs">
+        <svg class="const-svg" viewBox="0 0 300 380" xmlns="http://www.w3.org/2000/svg">
+          <polyline class="const-line" points="196,54 214,82 232,52 242,92 266,98 272,112 244,122 240,165 246,300 256,314 186,314 152,302 150,250 168,205 210,150 206,92 196,54" />
+          <polyline class="const-line" points="152,260 112,300 76,262 70,200 98,168 126,196" />
+          <g class="stars">
+            <circle class="const-star" cx="196" cy="54" r="4.5"/><circle class="const-star" cx="214" cy="82" r="3"/><circle class="const-star" cx="232" cy="52" r="4.5"/><circle class="const-star" cx="242" cy="92" r="3"/><circle class="const-star" cx="266" cy="98" r="3"/><circle class="const-star" cx="272" cy="112" r="4"/><circle class="const-star" cx="244" cy="122" r="3"/><circle class="const-star" cx="240" cy="165" r="3"/><circle class="const-star" cx="246" cy="300" r="4"/><circle class="const-star" cx="256" cy="314" r="3.5"/><circle class="const-star" cx="186" cy="314" r="4"/><circle class="const-star" cx="152" cy="302" r="3.5"/><circle class="const-star" cx="150" cy="250" r="3"/><circle class="const-star" cx="168" cy="205" r="3"/><circle class="const-star" cx="210" cy="150" r="3"/><circle class="const-star" cx="206" cy="92" r="3"/><circle class="const-star" cx="112" cy="300" r="3.2"/><circle class="const-star" cx="76" cy="262" r="3"/><circle class="const-star" cx="70" cy="200" r="3.5"/><circle class="const-star" cx="98" cy="168" r="3"/><circle class="const-star" cx="126" cy="196" r="2.8"/>
+          </g>
+        </svg>
+        <span class="const-label">Canis Celestial</span>
+      </a>
+    </div>
+    <div class="sky-prompt">
+      <p class="sky-kicker">You stepped through</p>
+      <h2>Choose your celestial guide</h2>
+      <div class="recap" id="recap"></div>
+    </div>
+  </div>
+
+  <!-- How It Works modal -->
+  <div id="howModal">
+    <div class="how-card">
+      <button class="how-close" aria-label="Close">×</button>
+      <p class="how-eyebrow">The Journey</p>
+      <h2 class="how-title">How Rescue Match Works</h2>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="how-step-num">01</div>
+          <div class="how-step-body">
+            <h3>Enter Your Birthday</h3>
+            <p>Share your birth month and day. We search Bay Area shelters for rescue animals who arrived — or were found — on that exact date, creating a connection that goes beyond the algorithm.</p>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">02</div>
+          <div class="how-step-body">
+            <h3>Choose Your Energy</h3>
+            <p>Are you a couch cuddler, a weekend explorer, or a daily adventurer? Great companions understand each other&rsquo;s pace — your energy shapes who you&rsquo;ll meet.</p>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">03</div>
+          <div class="how-step-body">
+            <h3>Follow Your Constellation</h3>
+            <p>Choose the Felis Celestial (cats) or the Canis Celestial (dogs). Your constellation guides you to a species and a soul waiting in a shelter nearby.</p>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">04</div>
+          <div class="how-step-body">
+            <h3>Meet Your Match</h3>
+            <p>Browse real rescue animals from Bay Area shelters. Every profile links directly to the rescue team — one email away from beginning your story together.</p>
+          </div>
+        </div>
+      </div>
+      <p class="how-footer">Rescue Match is a free tool connecting you to <strong>real animals at real shelters</strong>. We do not charge adoption fees — all inquiries go directly to the rescue organizations who care for these animals.</p>
+    </div>
+  </div>
+
+  <script>window.RM_DEFAULTS = {}; window.RM3_DEFAULTS = { dust: 1, glow: 1, darken: 0.22 };</script>
+  <script src="rm-audio.js"></script>
+
+  <!-- three.js (pinned) -->
+  <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+  <script src="rm-font-loader.js"></script>
+  <script src="rm-text-geometry.js"></script>
+  <script src="rm-text-3d.js"></script>
+
+  <script>
+  (function () {
+    'use strict';
+    var intro = document.getElementById('intro'), introHint = document.getElementById('introHint'), rail = document.getElementById('rail');
+    var introIdx = 0, introMax = 3, started = false;
+    var vBegin = document.getElementById('vBegin'), vJourney = document.getElementById('vJourney'), vEnd = document.getElementById('vEnd');
+    var journeyPlaying = false;
+    var jDur = 10;
+    vJourney.loop = false;
+    vJourney.addEventListener('loadedmetadata', function () { if (vJourney.duration && isFinite(vJourney.duration)) jDur = vJourney.duration; });
+    function updateVideos(pf) {
+      var ct = vJourney.currentTime, dur = jDur;
+      // Crossfades are driven by the VIDEO's real progress (not raw scroll), so a
+      // fast scroll can never fade the portal out before its scenes have played.
+      var enter = smooth(1.55, 2.15, pf);                 // begin -> portal at entry
+      var eOp = smooth(dur - 0.7, dur - 0.08, ct);        // portal -> ending only as the clip finishes
+      var bOp = 1 - enter;
+      var jOp = enter * (1 - eOp);
+      vBegin.style.opacity = bOp.toFixed(3);
+      vJourney.style.opacity = jOp.toFixed(3);
+      vEnd.style.opacity = eOp.toFixed(3);
+
+      // Scroll sets a TARGET time in the clip; the video only ever PLAYS FORWARD to
+      // reach it (never seeks). Scroll fast and it just plays faster through every
+      // frame — so no portal scene is ever skipped, and there's no seek-decode lag.
+      if (pf < 1.4) {                                     // scrolled back above the portal → rewind for a fresh run
+        if (ct > 0.05) { try { vJourney.currentTime = 0; } catch (e) {} }
+        if (!vJourney.paused) { try { vJourney.pause(); } catch (e) {} }
+        return;
+      }
+      var jt = Math.max(0, Math.min(1, (pf - 1.5) / (3.85 - 1.5)));
+      var targetCt = jt * (dur - 0.04);
+      var behind = targetCt - ct;
+      if (enter > 0.02 && ct < dur - 0.04 && behind > 0.04) {
+        if (vJourney.paused) { var p = vJourney.play(); if (p && p.catch) p.catch(function () {}); }
+        vJourney.playbackRate = Math.max(1, Math.min(6, 1 + behind * 2.5));
+      } else {
+        if (!vJourney.paused) { try { vJourney.pause(); } catch (e) {} }
+      }
+    }
+    document.documentElement.style.overflow = 'hidden';
+
+    var state = { bMonth: '', bDay: '', energy: '', species: '' };
+    try { state = Object.assign(state, JSON.parse(localStorage.getItem('rmFlow') || '{}')); } catch (e) {}
+    function save() { try { localStorage.setItem('rmFlow', JSON.stringify(state)); } catch (e) {} }
+
+    /* intro click-through */
+    function showIntroLine(i) {
+      intro.querySelectorAll('.intro-line').forEach(function (el) { el.classList.toggle('show', +el.dataset.i === i); });
+      intro.querySelectorAll('.intro-progress .d').forEach(function (d, k) { d.classList.toggle('on', k <= i); });
+    }
+    var beginPrompt = document.getElementById('beginPrompt');
+    var lockGate = document.getElementById('lockGate');
+    var enterBtn = document.getElementById('enterBtn');
+    var unlocked = false;
+    intro.addEventListener('click', function () {
+      if (started) return; introIdx++;
+      if (introIdx < introMax) showIntroLine(introIdx);
+      else {
+        started = true;
+        intro.classList.add('gone');
+        setTimeout(function () { intro.style.display = 'none'; }, 750);
+        lockGate.classList.add('show');                 // scroll stays LOCKED here
+        if (window.RMAudio && window.RMAudio.start) window.RMAudio.start();
+      }
+    });
+    showIntroLine(0);
+    function unlock() {
+      if (unlocked) return; unlocked = true;
+      lockGate.classList.add('done');
+      setTimeout(function () { lockGate.style.display = 'none'; }, 650);
+      document.documentElement.style.overflow = '';     // scroll unlocked once all chosen
+      rail.classList.add('show');
+      beginPrompt.classList.add('show');
+    }
+    enterBtn.addEventListener('click', function () { if (!enterBtn.disabled) unlock(); });
+
+    /* scroll → progress (0..1) */
+    var lastScrollT = 0;
+    function progress() { var m = document.documentElement.scrollHeight - window.innerHeight; return m > 0 ? Math.min(1, Math.max(0, window.scrollY / m)) : 0; }
+    // Non-linear scroll→phase: tight begin & end, most of the scroll spent in the
+    // portal middle so the travel-through feels long without stretching the ends.
+    function scrollToPhase(p) {
+      var b = 0.12, e = 0.74;        // begin ends at 12% scroll; end gets the last 26%
+      var ps = 1.5, pe = 3.85;       // portal phase band
+      if (p <= b) return ps * (p / b);
+      if (p >= e) return pe + (4 - pe) * ((p - e) / (1 - e));
+      return ps + (pe - ps) * ((p - b) / (e - b));
+    }
+    function pushProgress() {
+      lastScrollT = (window.performance ? performance.now() : Date.now());
+      var pr = progress();
+      if (window.RM3) window.RM3.setProgress(scrollToPhase(pr) / 4);
+      if (pr > 0.012) beginPrompt.classList.remove('show');
+    }
+    window.addEventListener('scroll', pushProgress, { passive: true });
+    window.addEventListener('resize', pushProgress, { passive: true });
+
+    /* card anchors in world space (z aligned with camera path) */
+    var anchors = {};
+    function setupAnchors() {
+      anchors[1] = new THREE.Vector3(0, 0, 8);
+      anchors[2] = new THREE.Vector3(0, 0, 2);
+      anchors[3] = new THREE.Vector3(0, 0, -4);
+      anchors[4] = new THREE.Vector3(0, 0, -12);
+    }
+    var cards = {};
+    document.querySelectorAll('.card3d').forEach(function (c) { cards[+c.dataset.step] = c; });
+
+    function smooth(a, b, x) { if (x <= a) return 0; if (x >= b) return 1; var t = (x - a) / (b - a); return t * t * (3 - 2 * t); }
+    var recapBuilt = false;
+
+    var endGate = document.getElementById('endGate');
+    /* called each frame by rm3d */
+    window.RM3updateCards = function (camera, pf, W, H) {
+      updateVideos(pf);
+      var show = pf > 3.8;
+      endGate.classList.toggle('show', show);
+      if (show && !recapBuilt) { buildRecap(); recapBuilt = true; }
+      if (!show) recapBuilt = false;
+      var near = Math.round(Math.min(3, pf));
+      rail.querySelectorAll('.r').forEach(function (r) { var n = +r.dataset.r; r.classList.toggle('on', n === near && pf < 3.8); r.classList.toggle('done', pf >= 3.8 || n < pf - 0.4); });
+    };
+
+    /* inputs */
+    var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var bMonth = document.getElementById('bMonth'), bDay = document.getElementById('bDay');
+    MONTHS.forEach(function (m, i) { var o = document.createElement('option'); o.value = String(i + 1); o.textContent = m; bMonth.appendChild(o); });
+    for (var d = 1; d <= 31; d++) { var o = document.createElement('option'); o.value = String(d); o.textContent = String(d); bDay.appendChild(o); }
+    if (state.bMonth) bMonth.value = state.bMonth; if (state.bDay) bDay.value = state.bDay;
+    function checkGate() {
+      var ok = bMonth.value && bDay.value && !!state.energy;
+      enterBtn.disabled = !ok; enterBtn.classList.toggle('ready', !!ok);
+      return ok;
+    }
+    function checkBday() {
+      var ok = bMonth.value && bDay.value;
+      var h = document.getElementById('hint1'); if (h) h.textContent = ok ? '✓ Birthday set' : 'Choose your birthday';
+      checkGate(); return ok;
+    }
+    bMonth.addEventListener('change', function () { state.bMonth = bMonth.value; save(); checkBday(); });
+    bDay.addEventListener('change', function () { state.bDay = bDay.value; save(); checkBday(); });
+
+    var energy = document.getElementById('energy');
+    energy.addEventListener('click', function (e) { var c = e.target.closest('.chip'); if (!c) return;
+      energy.querySelectorAll('.chip').forEach(function (x) { x.classList.remove('sel'); }); c.classList.add('sel');
+      state.energy = c.dataset.val; save(); var h2 = document.getElementById('hint2'); if (h2) h2.textContent = '✓ ' + c.dataset.val; checkGate(); });
+    if (state.energy) { var ec = energy.querySelector('[data-val="' + state.energy + '"]'); if (ec) ec.classList.add('sel'); }
+
+    var constCat = document.getElementById('constCat'), constDog = document.getElementById('constDog');
+    function bindConst(a, sp) {
+      a.addEventListener('click', function () { state.species = sp; save(); if (window.RMAudio && window.RMAudio.chime) window.RMAudio.chime(); });
+    }
+    bindConst(constCat, 'Cat');
+    bindConst(constDog, 'Dog');
+
+    function buildRecap() {
+      var recap = document.getElementById('recap'); recap.innerHTML = ''; var bits = [];
+      if (state.bMonth && state.bDay) bits.push(['Born', MONTHS[+state.bMonth - 1] + ' ' + state.bDay]);
+      if (state.energy) bits.push(['Pace', state.energy]);
+      if (state.species) bits.push(['Looking for', state.species === 'Either' ? 'Dog or cat' : state.species]);
+      bits.forEach(function (b) { var t = document.createElement('span'); t.className = 'tag'; t.innerHTML = b[0] + ' · <b>' + b[1] + '</b>'; recap.appendChild(t); });
+    }
+
+    window.RM3onReady = function () {
+      setupAnchors(); pushProgress(); checkBday(); checkGate();
+      [vBegin, vEnd].forEach(function (v) { v.muted = true; v.playsInline = true; var p = v.play(); if (p && p.catch) p.catch(function () {}); });
+      // prime the scrub clip so seeking is instant
+      vJourney.muted = true; vJourney.playsInline = true;
+      var pp = vJourney.play(); if (pp && pp.then) pp.then(function () { vJourney.pause(); vJourney.currentTime = 0; }).catch(function () {});
+      // sync the footage to the mouse, like the dust
+      var wrap = document.getElementById('videoWrap'), mx = 0, my = 0, cx = 0, cy = 0;
+      window.addEventListener('pointermove', function (e) { mx = e.clientX / window.innerWidth - 0.5; my = e.clientY / window.innerHeight - 0.5; }, { passive: true });
+      (function vtick() { requestAnimationFrame(vtick); cx += (mx - cx) * 0.06; cy += (my - cy) * 0.06; if (wrap) wrap.style.transform = 'scale(1.08) translate(' + (-cx * 18).toFixed(1) + 'px,' + (-cy * 13).toFixed(1) + 'px)'; })();
+    };
+
+    /* header + preloader */
+    document.getElementById('soundBtn').addEventListener('click', function () { window.RMAudio && window.RMAudio.toggleMute(); });
+    var mt = document.getElementById('menuToggle'), mm = document.getElementById('mobileMenu');
+    if (mt && mm) { mt.addEventListener('click', function () { var open = mm.classList.toggle('open'); mt.textContent = open ? 'close' : 'menu'; });
+      mm.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { mm.classList.remove('open'); mt.textContent = 'menu'; }); }); }
+    var L = document.getElementById('loader'), dots = document.getElementById('loaderDots');
+    var n = 0, iv = setInterval(function () { n = (n + 1) % 4; dots.textContent = '.'.repeat(n); }, 320);
+    setTimeout(function () { clearInterval(iv); dots.textContent = '…'; L.classList.add('reveal'); setTimeout(function () { L.style.display = 'none'; }, 1500); }, 1900);
+
+    /* ── Home reset ── */
+    window.rmGoHome = function () {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      try { vJourney.pause(); vJourney.currentTime = 0; } catch (e) {}
+      introIdx = 0; started = false;
+      intro.style.display = ''; intro.classList.remove('gone');
+      showIntroLine(0);
+      lockGate.style.display = ''; lockGate.classList.remove('show', 'done');
+      document.documentElement.style.overflow = 'hidden';
+      unlocked = false; recapBuilt = false;
+      beginPrompt.classList.remove('show');
+    };
+    document.getElementById('navLogo').addEventListener('click', function (e) {
+      e.preventDefault(); window.rmGoHome();
+    });
+
+    /* ── Nav logo 3D tilt ── */
+    var logoEl = document.getElementById('navLogo');
+    logoEl.addEventListener('mousemove', function (e) {
+      logoEl.classList.remove('easing');
+      var r = logoEl.getBoundingClientRect();
+      var dx = (e.clientX - (r.left + r.width  / 2)) / (r.width  / 2);
+      var dy = (e.clientY - (r.top  + r.height / 2)) / (r.height / 2);
+      logoEl.style.transform = 'perspective(220px) rotateY(' + (dx * 16) + 'deg) rotateX(' + (-dy * 10) + 'deg) scale(1.05)';
+    });
+    logoEl.addEventListener('mouseleave', function () {
+      logoEl.classList.add('easing');
+      logoEl.style.transform = 'perspective(220px) rotateY(0deg) rotateX(0deg) scale(1)';
+    });
+    logoEl.addEventListener('transitionend', function () { logoEl.classList.remove('easing'); });
+
+    /* ── How It Works modal ── */
+    var howModal = document.getElementById('howModal');
+    function openHow(e) { e.preventDefault(); howModal.classList.add('show'); if (mm) { mm.classList.remove('open'); if (mt) mt.textContent = 'menu'; } }
+    function closeHow() { howModal.classList.remove('show'); }
+    document.querySelectorAll('[data-open-how]').forEach(function (el) { el.addEventListener('click', openHow); });
+    howModal.querySelector('.how-close').addEventListener('click', closeHow);
+    howModal.addEventListener('click', function (e) { if (e.target === howModal) closeHow(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeHow(); });
+  })();
+
+  </script>
+
+  <!-- 3D engine -->
+  <script src="rm3d.js"></script>
+
+  <!-- Tweaks -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="GradientText.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <div id="tweaks-root"></div>
+  <script type="text/babel">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "dust": 1,
+      "glow": 1.1,
+      "darken": 0.08,
+      "hue": -4
+    }/*EDITMODE-END*/;
+    function TweaksApp() {
+      const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+      React.useEffect(() => { if (window.RM3) window.RM3.apply({ dust: t.dust, glow: t.glow, darken: t.darken, hue: t.hue }); }, [t.dust, t.glow, t.darken, t.hue]);
+      return (
+        <TweaksPanel>
+          <TweakSection label="3D effects" />
+          <TweakSlider label="Space dust" value={t.dust} min={0.2} max={2} step={0.1} onChange={(v) => setTweak('dust', v)} />
+          <TweakSlider label="Portal glow" value={t.glow} min={0} max={2.2} step={0.1} onChange={(v) => setTweak('glow', v)} />
+          <TweakSection label="Footage" />
+          <TweakSlider label="Darken" value={t.darken} min={0} max={0.6} step={0.02} onChange={(v) => setTweak('darken', v)} />
+          <TweakSlider label="Hue shift" value={t.hue} min={-40} max={40} step={2} onChange={(v) => setTweak('hue', v)} />
+        </TweaksPanel>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('tweaks-root')).render(<TweaksApp />);
+  </script>
+</body>
 </html>

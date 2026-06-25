@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rescue Match — Pals Born Under Your Star</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Varela+Round&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="GradientText.css" />
+<style>
+  :root {
+    --color-primary: #D97706;
+    --font-heading: 'Varela Round', system-ui, sans-serif;
+    --font-body: 'Nunito Sans', system-ui, sans-serif;
+    --bg: #07060f;
+  }
+  @property --x { syntax: '<length>'; inherits: true; initial-value: 50%; }
+  @property --y { syntax: '<length>'; inherits: true; initial-value: 50%; }
+  @property --r { syntax: '<length>'; inherits: true; initial-value: 0px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-body); color: #F4F1FF; min-height: 100vh;
+    background:
+      radial-gradient(120% 80% at 18% -10%, rgba(96,64,160,0.30), transparent 55%),
+      radial-gradient(120% 90% at 92% 0%, rgba(217,119,6,0.16), transparent 50%),
+      radial-gradient(140% 120% at 50% 120%, rgba(40,22,86,0.55), transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+  }
+  /* faint starfield */
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5;
+    background-image:
+      radial-gradient(1.5px 1.5px at 12% 22%, rgba(255,255,255,0.8), transparent),
+      radial-gradient(1.5px 1.5px at 78% 14%, rgba(220,210,255,0.7), transparent),
+      radial-gradient(1px 1px at 33% 64%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1.5px 1.5px at 88% 72%, rgba(255,235,200,0.7), transparent),
+      radial-gradient(1px 1px at 56% 38%, rgba(255,255,255,0.5), transparent),
+      radial-gradient(1px 1px at 22% 88%, rgba(220,210,255,0.6), transparent),
+      radial-gradient(1.5px 1.5px at 66% 90%, rgba(255,255,255,0.6), transparent),
+      radial-gradient(1px 1px at 5% 52%, rgba(255,255,255,0.5), transparent);
+  }
+
+  /* ── nav ── */
+  header {
+    position: relative; z-index: 5; display: flex; align-items: center; justify-content: space-between;
+    padding: clamp(18px,3vw,30px) clamp(20px,4vw,48px);
+  }
+  .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; transform-style: preserve-3d; cursor: pointer; }
+  .logo.easing { transition: transform 0.45s cubic-bezier(.15,.85,.35,1); }
+  .logo .paw { display: inline-flex; align-items: center; justify-content: center; width: 1.5em; height: 1.5em; font-size: 0.66em; background: var(--color-primary); color: #fff; border-radius: 9999px; box-shadow: 0 0 18px rgba(217,119,6,0.6); }
+  #rmNavLogo { display: inline-flex; align-items: center; }
+  #rmNavLogo .animated-gradient-text { backdrop-filter: none; border-radius: 0; background: none; }
+  #rmNavLogo .text-content { font-family: 'Syne', 'Varela Round', system-ui, sans-serif; font-weight: 800; font-size: clamp(15px,1.6vw,22px); letter-spacing: -0.01em; line-height: 1; }
+  .back { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: clamp(12px,1vw,14px); letter-spacing: 0.12em; text-transform: uppercase; color: #cdbfff; text-decoration: none; transition: color 180ms ease; }
+  .back:hover { color: #fff; }
+
+  /* ── hero ── */
+  .hero { position: relative; z-index: 4; text-align: center; padding: clamp(20px,4vh,46px) 6vw clamp(28px,5vh,52px); }
+  .divider { display: flex; align-items: center; justify-content: center; width: 100%; max-width: 320px; margin: 0 auto 22px; }
+  .divider .hair { height: 1px; flex: 1 1 auto; }
+  .divider .hair.left { background: linear-gradient(90deg, transparent, rgba(217,119,6,0.7)); }
+  .divider .hair.right { background: linear-gradient(-90deg, transparent, rgba(217,119,6,0.7)); }
+  .divider .diamond { width: 8px; height: 8px; border: 1px solid rgba(217,119,6,0.9); transform: rotate(45deg); position: relative; flex: 0 0 auto; margin: 0 10px; }
+  .divider .diamond::after { content: ''; position: absolute; inset: 2px; background: var(--color-primary); }
+  .kicker { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--color-primary); font-weight: 700; margin-bottom: 14px; }
+  .hero h1 { font-family: var(--font-heading); font-weight: 400; font-size: clamp(30px,5.4vw,60px); color: #fff; line-height: 1.08; letter-spacing: 0.01em; margin-bottom: 16px; text-wrap: balance; }
+  .hero h1 em { font-style: normal; color: #f3c98a; }
+  .hero p { font-size: clamp(15px,2vw,19px); color: #b8aee0; line-height: 1.6; max-width: 52ch; margin: 0 auto; text-wrap: balance; }
+  .recap { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 22px; }
+  .recap .tag { font-size: 13px; color: #ECE7FF; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16); border-radius: 9999px; padding: 8px 16px; }
+  .recap .tag b { color: #f3c98a; font-weight: 700; }
+
+  /* ── chroma grid ── */
+  .grid-wrap { position: relative; z-index: 3; max-width: 1140px; margin: 0 auto; padding: 0 clamp(16px,4vw,40px) clamp(60px,10vh,120px); }
+  .chroma-grid {
+    position: relative;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(16px,2vw,26px);
+    --x: 50%; --y: 50%; --r: 260px;
+  }
+  @media (max-width: 880px) { .chroma-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .chroma-grid { grid-template-columns: 1fr; } }
+
+  .chroma-card {
+    position: relative; border-radius: 20px; overflow: hidden; cursor: pointer;
+    background: rgba(14,10,30,0.66);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 18px 50px rgba(0,0,0,0.4);
+    transition: transform 280ms cubic-bezier(.2,.7,.2,1), box-shadow 280ms ease, border-color 280ms ease;
+    --accent: #D97706;
+  }
+  .chroma-card:hover, .chroma-card:focus-visible {
+    transform: translateY(-6px);
+    border-color: color-mix(in oklab, var(--accent) 70%, white 0%);
+    box-shadow: 0 26px 70px rgba(0,0,0,0.5), 0 0 34px -6px var(--accent);
+    outline: none;
+  }
+  .card-photo { position: relative; aspect-ratio: 4 / 3; overflow: hidden; }
+  .photo-fill {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(80% 70% at 30% 20%, color-mix(in oklab, var(--accent) 60%, #fff 0%), transparent 60%),
+      radial-gradient(90% 90% at 78% 88%, color-mix(in oklab, var(--accent) 85%, #000 35%), transparent 65%),
+      linear-gradient(150deg, color-mix(in oklab, var(--accent) 55%, #1a1140 0%), #120a28 80%);
+  }
+  .photo-fill::after {
+    content: ''; position: absolute; inset: 0; opacity: 0.5;
+    background-image:
+      radial-gradient(1.4px 1.4px at 20% 30%, rgba(255,255,255,0.9), transparent),
+      radial-gradient(1.2px 1.2px at 64% 22%, rgba(255,255,255,0.7), transparent),
+      radial-gradient(1.4px 1.4px at 80% 60%, rgba(255,255,255,0.8), transparent),
+      radial-gradient(1px 1px at 40% 74%, rgba(255,255,255,0.7), transparent),
+      radial-gradient(1.2px 1.2px at 12% 64%, rgba(255,255,255,0.6), transparent);
+  }
+  .photo-glyph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: clamp(56px,7vw,84px); filter: drop-shadow(0 8px 20px rgba(0,0,0,0.45)); opacity: 0.96; }
+  .photo-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+  .photo-badge {
+    position: absolute; top: 12px; left: 12px; z-index: 2; display: none; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #1a1206;
+    background: var(--color-primary); padding: 6px 11px; border-radius: 9999px; box-shadow: 0 6px 18px rgba(217,119,6,0.5);
+  }
+  .chroma-card.is-match .photo-badge { display: inline-flex; }
+
+  .card-body { padding: 16px 18px 18px; }
+  .card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .card-top h3 { font-family: var(--font-heading); font-weight: 400; font-size: clamp(20px,2vw,25px); color: #fff; }
+  .card-age { font-size: 13px; color: color-mix(in oklab, var(--accent) 55%, #fff 45%); font-weight: 700; white-space: nowrap; }
+  .card-breed { font-size: 14px; color: #b3a8d8; margin-top: 3px; }
+  .card-found { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #c9bff0; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .card-found .star { color: var(--color-primary); }
+  .card-found b { color: #f3c98a; font-weight: 700; }
+  .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+  .card-shelter { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #9a8fce; }
+  .card-cta { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: color-mix(in oklab, var(--accent) 60%, #fff 40%); white-space: nowrap; }
+
+  /* ── chroma spotlight: grayscale veil with a color hole at the cursor ── */
+  .chroma-overlay {
+    position: absolute; inset: 0; z-index: 6; pointer-events: none; border-radius: 20px;
+    backdrop-filter: grayscale(1) brightness(0.62);
+    -webkit-backdrop-filter: grayscale(1) brightness(0.62);
+    -webkit-mask-image: radial-gradient(circle var(--r) at var(--x) var(--y), transparent 0%, transparent 16%, #000 62%);
+            mask-image: radial-gradient(circle var(--r) at var(--x) var(--y), transparent 0%, transparent 16%, #000 62%);
+  }
+  /* warm spotlight ring that follows the cursor */
+  .chroma-glow {
+    position: absolute; inset: 0; z-index: 7; pointer-events: none; opacity: 0; transition: opacity 300ms ease;
+    background: radial-gradient(circle 240px at var(--x) var(--y), rgba(217,119,6,0.16), transparent 60%);
+    mix-blend-mode: screen;
+  }
+  .grid-wrap.active .chroma-glow { opacity: 1; }
+  /* when not interacting, close the hole → whole grid reads grayscale & calm */
+  .chroma-grid { transition: --r 420ms ease; }
+  .grid-wrap:not(.active) .chroma-grid { --r: 0px; }
+  @media (hover: none) {
+    /* touch devices: no cursor → show full colour, no veil */
+    .chroma-overlay { display: none; }
+  }
+
+  /* ── detail modal ── */
+  .modal { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 5vh 20px; opacity: 0; pointer-events: none; transition: opacity 320ms ease; }
+  .modal.open { opacity: 1; pointer-events: auto; }
+  .modal-scrim { position: absolute; inset: 0; background: rgba(4,3,12,0.78); backdrop-filter: blur(8px); }
+  .modal-card {
+    position: relative; z-index: 1; width: min(720px, 96vw); max-height: 90vh; overflow: hidden;
+    display: grid; grid-template-columns: 1fr 1fr; border-radius: 24px;
+    background: rgba(15,11,32,0.96); border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 40px 110px rgba(0,0,0,0.6); transform: translateY(16px) scale(0.98); transition: transform 320ms cubic-bezier(.2,.7,.2,1);
+    --accent: #D97706;
+  }
+  .modal.open .modal-card { transform: none; }
+  @media (max-width: 620px) { .modal-card { grid-template-columns: 1fr; max-height: 92vh; overflow-y: auto; } }
+  .modal-photo { position: relative; min-height: 260px; }
+  .modal-photo .photo-fill { border-radius: 0; }
+  .modal-photo .photo-glyph { font-size: clamp(72px,12vw,120px); }
+  .modal-body { padding: clamp(22px,3vw,34px); display: flex; flex-direction: column; }
+  .modal-eyebrow { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-primary); font-weight: 700; margin-bottom: 10px; }
+  .modal-body h2 { font-family: var(--font-heading); font-weight: 400; font-size: clamp(28px,3.6vw,40px); color: #fff; line-height: 1.06; margin-bottom: 6px; }
+  .modal-sub { font-size: 15px; color: #b3a8d8; margin-bottom: 18px; }
+  .modal-stats { display: flex; flex-direction: column; gap: 11px; margin-bottom: 22px; }
+  .stat { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #d8d0f0; }
+  .stat .ic { width: 28px; height: 28px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); font-size: 14px; }
+  .stat b { color: #f3c98a; font-weight: 700; }
+  .modal-blurb { font-size: 14.5px; color: #b8aee0; line-height: 1.6; margin-bottom: 24px; text-wrap: pretty; }
+  .modal-actions { margin-top: auto; display: flex; gap: 12px; flex-wrap: wrap; }
+  .cta { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px; letter-spacing: 0.03em; color: #1a1206; text-decoration: none; background: var(--color-primary); border: none; cursor: pointer; padding: 14px 24px; border-radius: 9999px; box-shadow: 0 12px 34px rgba(217,119,6,0.45); transition: transform 160ms ease, box-shadow 160ms ease; }
+  .cta:hover { transform: translateY(-2px); box-shadow: 0 16px 44px rgba(217,119,6,0.6); }
+  .cta.ghost { background: transparent; color: #d8d2ff; border: 1px solid rgba(255,255,255,0.22); box-shadow: none; }
+  .cta.ghost:hover { border-color: #fff; color: #fff; transform: translateY(-2px); }
+  .modal-close { position: absolute; top: 12px; right: 14px; z-index: 3; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.4); color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 160ms ease; }
+  .modal-close:hover { background: rgba(0,0,0,0.7); }
+</style>
+</head>
+<body>
+  <header>
+    <a class="logo" id="navLogo" href="/"><span class="paw">🐾</span><span id="rmNavLogo"></span></a>
+    <a class="back" href="/">← Back to the portal</a>
+  </header>
+
+  <section class="hero">
+    <div class="divider"><span class="hair left"></span><span class="diamond"></span><span class="hair right"></span></div>
+    <p class="kicker" id="kicker">Your celestial guide led you here</p>
+    <h1 id="title">Pals born under <em>your star</em></h1>
+    <p id="blurb">Each of these rescues was found on a date that orbits yours. Move your cursor across the sky to bring them into colour — and meet the one who shares your day.</p>
+    <div class="recap" id="recap"></div>
+  </section>
+
+  <div class="grid-wrap" id="gridWrap">
+    <div class="chroma-grid" id="grid">
+      <div class="chroma-overlay"></div>
+      <div class="chroma-glow"></div>
+    </div>
+  </div>
+
+  <!-- detail modal -->
+  <div class="modal" id="modal" role="dialog" aria-modal="true">
+    <div class="modal-scrim" data-close></div>
+    <div class="modal-card" id="modalCard">
+      <button class="modal-close" data-close aria-label="Close">✕</button>
+      <div class="modal-photo">
+        <div class="photo-fill"></div>
+        <span class="photo-glyph" id="mGlyph">🐾</span>
+      </div>
+      <div class="modal-body">
+        <p class="modal-eyebrow" id="mEyebrow">Rescue</p>
+        <h2 id="mName">Name</h2>
+        <p class="modal-sub" id="mSub">Breed · Age</p>
+        <div class="modal-stats" id="mStats"></div>
+        <p class="modal-blurb" id="mBlurb"></p>
+        <div class="modal-actions">
+          <button class="cta" id="mAdopt">Begin adoption →</button>
+          <button class="cta ghost" data-close>Keep looking</button>
+        </div>
+        <p class="modal-shelter-link" id="mShelterLink" style="display:none;margin-top:0.75rem;text-align:center;font-size:0.8rem;opacity:0.6"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+    var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    // palette stays in the cosmic + ember family (ember, gold, violet, blue, teal, rose)
+    var ACCENTS = ['#D97706', '#E8B14C', '#8B6CC9', '#4F86D6', '#3FA796', '#D9678A'];
+
+    // ── MOCK DATA (fallback until the backend is wired) — see loadPets() below ──
+    var MOCK = {
+      cat: [
+        { name: 'Luna',  breed: 'Domestic Shorthair', age: '2 yrs',  shelter: 'Lumen Rescue, Berkeley', found: [4,12],  blurb: 'A quiet stargazer who claims the warmest windowsill and watches the world go by. Luna greets the evening with a slow blink and a softer purr.' },
+        { name: 'Orion', breed: 'Maine Coon mix',     age: '4 yrs',  shelter: 'Northgate Shelter, Oakland', found: [7,3],  blurb: 'Big, plush, and endlessly gentle. Orion follows sunbeams across the floor and will supervise every cup of tea you ever make.' },
+        { name: 'Nova',  breed: 'Tortoiseshell',      age: '1 yr',   shelter: 'Bayside Animal Friends, SF', found: [11,9], blurb: 'Pure spark. Nova chases ribbons of light and naps mid-zoom. A little chaos, a lot of heart.' },
+        { name: 'Vega',  breed: 'Russian Blue mix',   age: '6 yrs',  shelter: 'Lumen Rescue, Berkeley', found: [2,27], blurb: 'Calm, velvet-grey, and deeply loyal. Vega prefers one trusted human and an evening of quiet company.' },
+        { name: 'Comet', breed: 'Tabby',              age: '3 yrs',  shelter: 'Stargrove Cat Haven, Albany', found: [9,18], blurb: 'A curious explorer who maps every shelf and shadow. Comet is happiest with a tall perch and a window to the stars.' },
+        { name: 'Mochi', breed: 'Ragdoll mix',        age: '5 mo',   shelter: 'Northgate Shelter, Oakland', found: [12,1], blurb: 'Soft as a cloud and twice as sleepy. Mochi melts into any lap and dreams of a forever sofa.' }
+      ],
+      dog: [
+        { name: 'Atlas',   breed: 'Shepherd mix',       age: '3 yrs', shelter: 'Lumen Rescue, Berkeley', found: [4,12],  blurb: 'Steady, brave, and devoted. Atlas carries the calm of an old soul and will walk every trail beside you, rain or shine.' },
+        { name: 'Sirius',  breed: 'Husky mix',          age: '2 yrs', shelter: 'Northgate Shelter, Oakland', found: [1,20], blurb: 'Bright-eyed and full of song. Sirius loves long runs under open sky and will tell you all about his day, loudly.' },
+        { name: 'Cosmo',   breed: 'Beagle',             age: '5 yrs', shelter: 'Bayside Animal Friends, SF', found: [8,7],  blurb: 'A nose with a dog attached. Cosmo follows every scent to its happy ending and naps like a champion afterward.' },
+        { name: 'Juno',    breed: 'Border Collie mix',  age: '1 yr',  shelter: 'Stargrove Pet Haven, Albany', found: [10,5], blurb: 'Clever, quick, and eager to please. Juno learns tricks faster than you can invent them and loves a good puzzle.' },
+        { name: 'Apollo',  breed: 'Golden Retriever',   age: '4 yrs', shelter: 'Lumen Rescue, Berkeley', found: [6,14], blurb: 'Sunshine in dog form. Apollo greets strangers like long-lost friends and has never met a tennis ball he didn\u2019t love.' },
+        { name: 'Biscuit', breed: 'Corgi mix',          age: '6 mo',  shelter: 'Northgate Shelter, Oakland', found: [12,1], blurb: 'Short legs, enormous heart. Biscuit trots through life with ears up and tail going, certain the best is yet to come.' }
+      ]
+    };
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  BACKEND SEAM. Replace the body of loadPets() with a real API call:
+    //    const r = await fetch(`/api/rescues?species=${species}`
+    //                + (bday ? `&month=${bday[0]}&day=${bday[1]}` : ''));
+    //    return await r.json();
+    //  Return an array of objects matching the MOCK shape:
+    //    { name, breed, age, shelter, found:[month,day], blurb, photo? }
+    //  The server should return birthday-matched rescues first (found date ==
+    //  the visitor's bday) so the “shares your day” payoff is real, not forced.
+    // ─────────────────────────────────────────────────────────────────────
+    async function loadPets(species, bday) {
+      var url = '/api/rescues?species=' + encodeURIComponent(species);
+      if (bday) url += '&month=' + bday[0] + '&day=' + bday[1];
+      var r = await fetch(url);
+      if (!r.ok) throw new Error('API ' + r.status);
+      return await r.json();
+    }
+
+    // read the journey (quiz answers persisted by the landing experience)
+    var st = {};
+    try { st = JSON.parse(localStorage.getItem('rmFlow') || '{}'); } catch (e) {}
+    var sp = new URLSearchParams(location.search).get('species') || (st.species || '').toLowerCase();
+    var species = (sp === 'cat' || sp === 'dog') ? sp : 'cat';
+    var userBday = (st.bMonth && st.bDay) ? [parseInt(st.bMonth, 10), parseInt(st.bDay, 10)] : null;
+    var glyph = species === 'cat' ? '🐱' : '🐶';
+    var list = [];
+
+    function dateLabel(f) { return MON[f[0] - 1] + ' ' + f[1]; }
+    function isMatch(f) { return userBday && f[0] === userBday[0] && f[1] === userBday[1]; }
+
+    // ── hero copy ──
+    function renderHero() {
+      document.getElementById('kicker').textContent = species === 'cat' ? 'Felis Celestial led you here' : 'Canis Celestial led you here';
+      document.getElementById('title').innerHTML = (species === 'cat' ? 'Cats' : 'Dogs') + ' born under <em>your star</em>';
+      var recap = document.getElementById('recap'); var bits = [];
+      if (userBday) bits.push(['Your day', MONTHS[userBday[0] - 1] + ' ' + userBday[1]]);
+      if (st.energy) bits.push(['Your pace', st.energy]);
+      bits.push(['Looking for', species === 'cat' ? 'Cats' : 'Dogs']);
+      bits.forEach(function (b) { var t = document.createElement('span'); t.className = 'tag'; t.innerHTML = b[0] + ' · <b>' + b[1] + '</b>'; recap.appendChild(t); });
+    }
+
+    // ── build cards ──
+    var grid = document.getElementById('grid');
+    function renderCards() {
+      list.forEach(function (p, i) {
+        var accent = ACCENTS[i % ACCENTS.length];
+        var card = document.createElement('article');
+        card.className = 'chroma-card' + (isMatch(p.found) ? ' is-match' : '');
+        card.style.setProperty('--accent', accent);
+        card.setAttribute('tabindex', '0');
+        card.dataset.i = i;
+        card.innerHTML =
+          '<div class="card-photo">' +
+            (p.photo ? '<img class="photo-img" src="' + p.photo + '" alt="' + p.name + '" loading="lazy" onerror="this.remove()">' : '') +
+            '<div class="photo-fill"' + (p.photo ? ' style="opacity:0.15"' : '') + '></div>' +
+            '<span class="photo-glyph"' + (p.photo ? ' style="display:none"' : '') + '>' + glyph + '</span>' +
+            '<span class="photo-badge">★ shares your day</span>' +
+          '</div>' +
+          '<div class="card-body">' +
+            '<div class="card-top"><h3>' + p.name + '</h3><span class="card-age">' + p.age + '</span></div>' +
+            '<p class="card-breed">' + p.breed + '</p>' +
+            '<div class="card-found"><span class="star">★</span>Found <b>' + dateLabel(p.found) + '</b>' + (isMatch(p.found) ? ' — their birthday is yours' : ' — their birthday') + '</div>' +
+            '<div class="card-foot"><span class="card-shelter">◎ ' + p.shelter + '</span><span class="card-cta">Details →</span></div>' +
+          '</div>';
+        card.addEventListener('click', function () { openModal(i); });
+        card.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(i); } });
+        grid.insertBefore(card, grid.querySelector('.chroma-overlay'));
+      });
+    }
+
+    // ── boot ──
+    (async function init() {
+      renderHero();
+      try { list = await loadPets(species, userBday); }
+      catch (e) {
+        console.warn('loadPets failed, falling back to mock:', e);
+        list = (MOCK[species] || MOCK.cat).slice();
+        if (userBday) list[0] = Object.assign({}, list[0], { found: userBday.slice() });
+      }
+      renderCards();
+    })();
+
+    // ── chroma spotlight tracking ──
+    var wrap = document.getElementById('gridWrap');
+    var tx = 0, ty = 0, raf = null;
+    function apply() { raf = null; grid.style.setProperty('--x', tx + 'px'); grid.style.setProperty('--y', ty + 'px'); }
+    grid.addEventListener('pointermove', function (e) {
+      var r = grid.getBoundingClientRect();
+      tx = e.clientX - r.left; ty = e.clientY - r.top;
+      if (!raf) raf = requestAnimationFrame(apply);
+    });
+    grid.addEventListener('pointerenter', function () { wrap.classList.add('active'); });
+    grid.addEventListener('pointerleave', function () { wrap.classList.remove('active'); });
+
+    // ── modal ──
+    var modal = document.getElementById('modal');
+    var modalCard = document.getElementById('modalCard');
+    function openModal(i) {
+      var p = list[i]; var accent = ACCENTS[i % ACCENTS.length];
+      modalCard.style.setProperty('--accent', accent);
+      var mPhoto = modalCard.querySelector('.modal-photo');
+      var existingImg = mPhoto.querySelector('.photo-img');
+      if (existingImg) existingImg.remove();
+      if (p.photo) { var img = document.createElement('img'); img.className = 'photo-img'; img.src = p.photo; img.alt = p.name; img.onerror = function() { this.remove(); }; mPhoto.insertBefore(img, mPhoto.firstChild); }
+      document.getElementById('mGlyph').style.display = p.photo ? 'none' : '';
+      document.getElementById('mGlyph').textContent = glyph;
+      document.getElementById('mEyebrow').textContent = isMatch(p.found) ? '★ Shares your birthday' : 'Rescue ' + (species === 'cat' ? 'cat' : 'dog');
+      document.getElementById('mName').textContent = p.name;
+      document.getElementById('mSub').textContent = p.breed + ' · ' + p.age;
+      var stats = document.getElementById('mStats');
+      var shelterLine = p.shelterUrl
+        ? '<a href="' + p.shelterUrl + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px">' + p.shelter + '</a>'
+        : p.shelter;
+      var contactLine = p.shelterPhone
+        ? '<a href="tel:' + p.shelterPhone.replace(/[^\d+]/g,'') + '" style="color:inherit;text-decoration:underline;text-underline-offset:3px">' + p.shelterPhone + '</a>'
+        : (p.shelterEmail ? '<a href="mailto:' + p.shelterEmail + '" style="color:inherit;text-decoration:underline;text-underline-offset:3px">' + p.shelterEmail + '</a>' : null);
+      stats.innerHTML =
+        '<div class="stat"><span class="ic">★</span><span>Found <b>' + MONTHS[p.found[0]-1] + ' ' + p.found[1] + '</b>' + (isMatch(p.found) ? ' — the very day you were born' : ' — their birthday') + '</span></div>' +
+        '<div class="stat"><span class="ic">◎</span><span>' + shelterLine + '</span></div>' +
+        (contactLine ? '<div class="stat"><span class="ic">✉</span><span>' + contactLine + '</span></div>' : '') +
+        '<div class="stat"><span class="ic">✦</span><span>' + p.age + ' old · ready for a home</span></div>';
+      document.getElementById('mBlurb').textContent = p.blurb;
+      var adoptBtn = document.getElementById('mAdopt');
+      var emailLink = null;
+      if (p.shelterEmail) {
+        var subj = 'Adoption inquiry' + (p.rescueId ? ' — ' + p.rescueId : '') + ': ' + p.name;
+        var body = 'Hi,\n\nI saw ' + p.name + (p.rescueId ? ' (ID: ' + p.rescueId + ')' : '') + ' on Rescue Match and would love to learn more about adopting them.\n\nThank you!';
+        emailLink = 'mailto:' + p.shelterEmail + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+      }
+      var primaryLink = emailLink || p.shelterUrl || null;
+      adoptBtn.textContent = emailLink ? 'Email about ' + p.name + ' →' : p.shelterUrl ? 'Visit ' + p.shelter + ' →' : 'Contact shelter →';
+      if (primaryLink) {
+        adoptBtn.onclick = function () { window.open(primaryLink, '_blank', 'noopener'); };
+        adoptBtn.style.opacity = '1';
+        adoptBtn.style.pointerEvents = 'auto';
+      } else {
+        adoptBtn.onclick = function () { closeModal(); };
+        adoptBtn.style.opacity = '0.6';
+        adoptBtn.style.pointerEvents = 'none';
+      }
+      var shelterLinkEl = document.getElementById('mShelterLink');
+      if (emailLink && p.shelterUrl) {
+        shelterLinkEl.style.display = '';
+        shelterLinkEl.innerHTML = 'Or <a href="' + p.shelterUrl + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">visit ' + p.shelter + '</a>';
+      } else {
+        shelterLinkEl.style.display = 'none';
+        shelterLinkEl.innerHTML = '';
+      }
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() { modal.classList.remove('open'); document.body.style.overflow = ''; }
+    modal.addEventListener('click', function (e) { if (e.target.hasAttribute('data-close')) closeModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+  })();
+  </script>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+  <script type="text/babel" src="GradientText.jsx"></script>
+
+  <script>
+  (function () {
+    var logoEl = document.getElementById('navLogo');
+    if (!logoEl) return;
+    logoEl.addEventListener('mousemove', function (e) {
+      logoEl.classList.remove('easing');
+      var r = logoEl.getBoundingClientRect();
+      var dx = (e.clientX - (r.left + r.width  / 2)) / (r.width  / 2);
+      var dy = (e.clientY - (r.top  + r.height / 2)) / (r.height / 2);
+      logoEl.style.transform = 'perspective(220px) rotateY(' + (dx * 16) + 'deg) rotateX(' + (-dy * 10) + 'deg) scale(1.05)';
+    });
+    logoEl.addEventListener('mouseleave', function () {
+      logoEl.classList.add('easing');
+      logoEl.style.transform = 'perspective(220px) rotateY(0deg) rotateX(0deg) scale(1)';
+    });
+    logoEl.addEventListener('transitionend', function () { logoEl.classList.remove('easing'); });
+  })();
+  </script>
+
+  <style>*, *::before, *::after { cursor: none !important; }</style>
+  <script>
+  (function () {
+    var canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;z-index:9999;';
+    document.body.appendChild(canvas);
+    var ctx = canvas.getContext('2d');
+
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+
+    var trail = [];      // { x, y, t }
+    var TRAIL_MS = 380;
+    var mx = -999, my = -999, visible = false;
+
+    document.addEventListener('mousemove', function (e) {
+      mx = e.clientX; my = e.clientY; visible = true;
+      trail.push({ x: mx, y: my, t: performance.now() });
+    }, { passive: true });
+    document.addEventListener('mouseleave', function () { visible = false; });
+    document.addEventListener('mouseenter', function () { visible = true; });
+
+    function drawStar(cx, cy, outer, inner, nPts, angle, alpha) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.shadowColor = '#FFE580';
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      for (var i = 0; i < nPts * 2; i++) {
+        var r = i % 2 === 0 ? outer : inner;
+        var a = (Math.PI / nPts) * i + angle;
+        if (i === 0) ctx.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+        else          ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+      }
+      ctx.closePath();
+      ctx.fillStyle = '#FFFDE7';
+      ctx.fill();
+      // second pass with tighter glow
+      ctx.shadowBlur = 6;
+      ctx.fillStyle = '#FFE580';
+      ctx.globalAlpha = alpha * 0.5;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    var tick = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      var W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      if (!visible) return;
+
+      tick += 0.07;
+      var now = performance.now();
+
+      // Prune expired trail points
+      var cutoff = now - TRAIL_MS;
+      var i = 0;
+      while (i < trail.length && trail[i].t < cutoff) i++;
+      if (i > 0) trail = trail.slice(i);
+
+      // Comet tail
+      if (trail.length > 1) {
+        for (var j = 1; j < trail.length; j++) {
+          var t = j / trail.length;             // 0 = oldest, 1 = newest
+          var age = (now - trail[j].t) / TRAIL_MS; // 0 = fresh, 1 = about to expire
+          var alpha = t * t * (1 - age * 0.6) * 0.75;
+          var lw = t * 3.5;
+          ctx.beginPath();
+          ctx.moveTo(trail[j - 1].x, trail[j - 1].y);
+          ctx.lineTo(trail[j].x,     trail[j].y);
+          ctx.strokeStyle = 'rgba(255, 228, 100, ' + alpha.toFixed(3) + ')';
+          ctx.lineWidth = lw;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+        }
+      }
+
+      // Soft halo at cursor head
+      var grd = ctx.createRadialGradient(mx, my, 0, mx, my, 22);
+      grd.addColorStop(0,   'rgba(255, 255, 200, 0.55)');
+      grd.addColorStop(0.4, 'rgba(255, 200, 60,  0.22)');
+      grd.addColorStop(1,   'rgba(255, 140, 40,  0)');
+      ctx.beginPath();
+      ctx.arc(mx, my, 22, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+
+      // 4-pointed sparkle star (rotates slowly)
+      drawStar(mx, my, 8, 2.5, 4, tick - Math.PI / 4, 1.0);
+
+      // Tiny sparkle at middle of tail
+      if (trail.length > 4) {
+        var mid = trail[Math.floor(trail.length * 0.5)];
+        drawStar(mid.x, mid.y, 3, 1, 4, -tick, 0.5);
+      }
+    }
+
+    animate();
+  })();
+  </script>
+</body>
+</html>
