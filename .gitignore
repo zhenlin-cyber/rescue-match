@@ -23,9 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Large video assets — store in cloud storage, not git
-public/uploads/
-
 # Design system tooling (separate from the app)
 design-system/
 
